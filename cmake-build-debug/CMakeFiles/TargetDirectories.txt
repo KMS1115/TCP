@@ -1,3 +1,0 @@
-/home/pc/CLionProjects/TCP/cmake-build-debug/CMakeFiles/TCP.dir
-/home/pc/CLionProjects/TCP/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/pc/CLionProjects/TCP/cmake-build-debug/CMakeFiles/rebuild_cache.dir
