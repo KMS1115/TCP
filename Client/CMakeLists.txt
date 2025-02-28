@@ -9,7 +9,3 @@ target_include_directories(CLIENT
         PUBLIC
         include
 )
-
-target_link_libraries(CLIENT
-        COMMON
-)

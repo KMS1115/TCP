@@ -9,7 +9,3 @@ target_include_directories(SERVER
         PUBLIC
         include
 )
-
-target_link_libraries(SERVER
-        Common
-)
