@@ -1,12 +1,12 @@
-#include <iostream>
-#include <cstring>      // memset()
-#include <sys/socket.h> // socket(), bind(), listen(), accept()
-#include <netinet/in.h> // sockaddr_in
-#include <unistd.h>     // close()
+//
+// Created by pc on 2/28/25.
+//
+
+#include "server.hpp"
 
 #define PORT 8080
 
-struct RobotState
+struct RobotState;
 
 int main() {
     int server_fd, new_socket;
