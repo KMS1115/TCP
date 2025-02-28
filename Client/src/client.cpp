@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define PORT 8080
+#define PORT 8000
 
 // 로봇 상태 데이터 구조체
 struct RobotState {

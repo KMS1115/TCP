@@ -6,9 +6,9 @@
 #define SERVER_HPP
 
 #include <iostream>
-#include <cstring>      // memset()
-#include <sys/socket.h> // socket(), bind(), listen(), accept()
-#include <netinet/in.h> // sockaddr_in
-#include <unistd.h>     // close()
+#include <cstring>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
 
 #endif //SERVER_HPP
