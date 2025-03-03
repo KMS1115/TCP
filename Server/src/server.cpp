@@ -2,23 +2,41 @@
 // Created by pc on 2/28/25.
 //
 
+// SERVER -> VISION PC
+// CLIENT -> CONTROL PC
+
 #include "server.hpp"
 
 #define PORT 8000
 
 struct RobotState
 {
-    int torque;
-    int motorpos;
+    double torque;
+    double motorpos;
 };
 
 struct Vision
 {
-    int footstep[4];
+    double footstep[4];
 };
 
 RobotState robot;
 Vision vision;
+uint64_t temp;
+
+uint64_t htonll(uint64_t value)
+{
+    uint32_t high_part = htonl(static_cast<uint32_t>(value >> 32));
+    uint32_t low_part = htonl(static_cast<uint32_t>(value & 0xFFFFFFFF));
+    return (static_cast<uint64_t>(low_part) << 32) | high_part;
+}
+
+uint64_t ntohll(uint64_t value)
+{
+    uint32_t high_part = ntohl(static_cast<uint32_t>(value >> 32));
+    uint32_t low_part = ntohl(static_cast<uint32_t>(value & 0xFFFFFFFF));
+    return (static_cast<uint64_t>(low_part) << 32) | high_part;
+}
 
 int main()
 {
@@ -57,26 +75,46 @@ int main()
 
     // 5. 클라이언트 연결 수락
     clientSocket = accept(serverSocket, (struct sockaddr *)&address, (socklen_t*)&addrlen);
-    if (clientSocket < 0) {
+    if (clientSocket < 0)
+    {
         perror("Accept Failed");
         return -1;
     }
 
-    // 6. 클라이언트에서 데이터 받기
-    read(clientSocket, &robot, sizeof(robot));
-
-    robot.torque = ntohl(robot.torque);
-    robot.motorpos = ntohl(robot.motorpos);
-
-    // 7. 클라이언트로 데이터 보내기
-    for (int idx = 0; idx < 4; idx++)
+    // 6. 데이터 송신 및 수신
+    while (true)
     {
-        vision.footstep[idx] = ntohl(vision.footstep[idx]);
+        int bytesReceived = recv(clientSocket, &temp, sizeof(temp), 0);
+        if (bytesReceived <= 0) break;
+
+        temp = ntohll(temp);
+        memcpy(&robot.torque, &temp, sizeof(robot.torque));
+
+        recv(clientSocket, &temp, sizeof(temp), 0);
+        temp = ntohll(temp);
+        memcpy(&robot.motorpos, &temp, sizeof(robot.motorpos));
+
+        std::cout << "torque : " << robot.torque << std::endl;
+        std::cout << "motorpos : " << robot.motorpos << std::endl;
+
+        vision.footstep[0] = 0.1;
+        vision.footstep[1] = 1.2;
+        vision.footstep[2] = 2.3;
+        vision.footstep[3] = 3.4;
+
+        for (int idx = 0; idx < 4; idx++)
+        {
+            memcpy(&temp, &vision.footstep[idx], sizeof(temp));
+            temp = htonll(temp);
+            memcpy(&vision.footstep[idx], &temp, sizeof(temp));
+        }
+
+        send(clientSocket, &vision, sizeof(vision), 0);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    send(clientSocket, &vision, sizeof(vision), 0);
-
-    // 8. 소켓 종료
+    // 7. 소켓 종료
     close(clientSocket);
     close(serverSocket);
 

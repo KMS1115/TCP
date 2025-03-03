@@ -2,63 +2,99 @@
 // Created by pc on 2/28/25.
 //
 
-#include <iostream>
-#include <cstring>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+// SERVER -> VISION PC
+// CLIENT -> CONTROL PC
+
+#include "client.hpp"
 
 #define PORT 8000
+#define SERVER_IP "10.125.63.97"
 
-// 로봇 상태 데이터 구조체
-struct RobotState {
-    float battery;
-    float velocity;
-    float position[3]; // x, y, z
+struct RobotState
+{
+    double torque;
+    double motorpos;
 };
 
-int main() {
-    int sock = 0;
-    struct sockaddr_in serv_addr;
+struct Vision
+{
+    double footstep[4];
+};
+
+RobotState robot;
+Vision vision;
+uint64_t temp;
+
+uint64_t htonll(uint64_t value)
+{
+    uint32_t high_part = htonl(static_cast<uint32_t>(value >> 32));
+    uint32_t low_part = htonl(static_cast<uint32_t>(value & 0xFFFFFFFF));
+    return (static_cast<uint64_t>(low_part) << 32) | high_part;
+}
+
+uint64_t ntohll(uint64_t value)
+{
+    uint32_t high_part = ntohl(static_cast<uint32_t>(value >> 32));
+    uint32_t low_part = ntohl(static_cast<uint32_t>(value & 0xFFFFFFFF));
+    return (static_cast<uint64_t>(low_part) << 32) | high_part;
+}
+
+int main()
+{
+    int clientSocket;
+    struct sockaddr_in address;
 
     // 1. 클라이언트 소켓 생성
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-        perror("Socket creation error");
+    clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (clientSocket < 0)
+    {
+        perror("Socket Failed");
         return -1;
     }
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
-
-    // 2. 서버 주소 설정 (127.0.0.1:8080)
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+    // 2. 서버 주소 설정 (localhost:8000)
+    address.sin_family = AF_INET;
+    address.sin_port = htons(PORT);
+    if (inet_pton(AF_INET, SERVER_IP, &address.sin_addr) <= 0)
+    {
         perror("Invalid address / Address not supported");
         return -1;
     }
 
     // 3. 서버에 연결 요청
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+    if (connect(clientSocket, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("Connection Failed");
         return -1;
     }
 
-    // 4. 풋스텝 데이터 전송
-    float footstep[6] = {0.5, 1.2, 0.3, 0.0, 0.1, 0.2}; // (x, y, z, roll, pitch, yaw)
-    send(sock, footstep, sizeof(footstep), 0);
-    std::cout << "Sent footstep: ["
-              << footstep[0] << ", " << footstep[1] << ", " << footstep[2] << ", "
-              << footstep[3] << ", " << footstep[4] << ", " << footstep[5] << "]\n";
+    // 4. 데이터 송신 및 수신
 
-    // 5. 서버로부터 로봇 상태 데이터 수신
-    RobotState state;
-    read(sock, &state, sizeof(state));
-    std::cout << "Received robot state: [Battery: " << state.battery << ", Velocity: "
-              << state.velocity << ", Position: (" << state.position[0] << ", "
-              << state.position[1] << ", " << state.position[2] << ")]\n";
+    while (true)
+    {
+        robot = {123.456, 789.012};
+        memcpy(&temp, &robot.torque, sizeof(temp));
+        temp = htonll(temp);
+        send(clientSocket, &temp, sizeof(temp), 0);
 
-    // 6. 소켓 종료
-    close(sock);
+        memcpy(&temp, &robot.motorpos, sizeof(temp));
+        temp = htonll(temp);
+        send(clientSocket, &temp, sizeof(temp), 0);
+
+        recv(clientSocket, &vision, sizeof(vision), 0);
+
+        for (int idx = 0; idx < 4; idx++)
+        {
+            memcpy(&temp, &vision.footstep[idx], sizeof(temp));
+            temp = ntohll(temp);
+            memcpy(&vision.footstep[idx], &temp, sizeof(temp));
+            std::cout << "vision[" << idx << "] : " << vision.footstep[idx] << std::endl;
+        }
+        std::cout << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    // 5. 소켓 종료
+    close(clientSocket);
+
     return 0;
 }
