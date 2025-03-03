@@ -23,6 +23,5 @@ struct Vision
 
 RobotState robot;
 Vision vision;
-uint64_t temp;
 
 #endif //CLIENT_HPP
