@@ -5,15 +5,24 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include <iostream>
-#include <cstring>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <cstring>
-#include <cstdint>
-#include <thread>
-#include <chrono>
+#include "common.hpp"
+
+#define PORT 8000
+#define SERVER_IP "10.125.63.97"
+
+struct RobotState
+{
+    double torque;
+    double motorpos;
+};
+
+struct Vision
+{
+    double footstep[4];
+};
+
+RobotState robot;
+Vision vision;
+uint64_t temp;
 
 #endif //CLIENT_HPP

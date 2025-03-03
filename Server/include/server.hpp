@@ -5,14 +5,23 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <iostream>
-#include <cstring>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <cstring>
-#include <cstdint>
-#include <thread>
-#include <chrono>
+#include "common.hpp"
+
+#define PORT 8000
+
+struct RobotState
+{
+    double torque;
+    double motorpos;
+};
+
+struct Vision
+{
+    double footstep[4];
+};
+
+RobotState robot;
+Vision vision;
+uint64_t temp;
 
 #endif //SERVER_HPP
